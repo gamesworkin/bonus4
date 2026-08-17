@@ -442,6 +442,16 @@ $("#clearFilters").addEventListener("click", () => {
   renderGames();
 });
 
+/* ===== animação de clique no botão de download do modal ===== */
+$("#gmDownload").addEventListener("click", (e) => {
+  const a = e.currentTarget;
+  if (a.classList.contains("hidden")) return;
+  a.classList.remove("is-clicked");
+  void a.offsetWidth;
+  a.classList.add("is-clicked");
+  setTimeout(() => a.classList.remove("is-clicked"), 650);
+});
+
 /* ================= MODAL DO JOGO ================= */
 function openGame(id) {
   const g = state.games.find((x) => x.id === id);
@@ -466,16 +476,6 @@ function openGame(id) {
   const dl = $("#gmDownload");
   if (g.download) { dl.href = g.download; dl.classList.remove("hidden"); }
   else dl.classList.add("hidden");
-
-  if (!dl.dataset.animBound) {
-    dl.dataset.animBound = "1";
-    dl.addEventListener("click", () => {
-      dl.classList.remove("is-clicked");
-      void dl.offsetWidth;
-      dl.classList.add("is-clicked");
-      setTimeout(() => dl.classList.remove("is-clicked"), 650);
-    });
-  }
 
   openModal("#gameModal");
 }

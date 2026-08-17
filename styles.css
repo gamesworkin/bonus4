@@ -133,7 +133,7 @@ textarea { resize: vertical; }
 .card-sub { color: var(--muted); font-size: .8rem; display: block; }
 
 /* ===== BOTÃO DE DOWNLOAD NO CARD ===== */
-.card-dl, .modal-dl {
+.card-dl {
   position: relative; overflow: hidden;
   display: flex; align-items: center; justify-content: center; gap: 8px;
   margin-top: 10px; padding: 9px 12px; border-radius: 999px;
@@ -144,22 +144,22 @@ textarea { resize: vertical; }
   transition: transform .22s cubic-bezier(.2,.9,.3,1.4), box-shadow .22s, filter .22s;
   will-change: transform;
 }
-.card-dl::before, .modal-dl::before {
+.card-dl::before {
   content: ""; position: absolute; inset: 0;
   background: linear-gradient(110deg, transparent 20%, rgba(255,255,255,.55) 50%, transparent 80%);
   transform: translateX(-120%);
   transition: transform .7s ease;
 }
-.card-dl:hover, .modal-dl:hover {
+.card-dl:hover {
   transform: scale(1.07);
   filter: brightness(1.06);
   box-shadow: 0 14px 28px color-mix(in srgb, var(--primary) 42%, transparent);
 }
-.card-dl:hover::before, .modal-dl:hover::before { transform: translateX(120%); }
-.card-dl:hover .card-dl-icon, .modal-dl:hover .card-dl-icon { animation: dlBounce .7s ease infinite; }
-.card-dl:active, .modal-dl:active { transform: scale(.94); }
-.card-dl.is-clicked, .modal-dl.is-clicked { animation: dlPop .6s cubic-bezier(.2,.9,.3,1.4); }
-.card-dl.is-clicked::after, .modal-dl.is-clicked::after {
+.card-dl:hover::before { transform: translateX(120%); }
+.card-dl:hover .card-dl-icon { animation: dlBounce .7s ease infinite; }
+.card-dl:active { transform: scale(.94); }
+.card-dl.is-clicked { animation: dlPop .6s cubic-bezier(.2,.9,.3,1.4); }
+.card-dl.is-clicked::after {
   content: ""; position: absolute; inset: 0; border-radius: inherit;
   border: 2px solid color-mix(in srgb, var(--primary) 70%, transparent);
   animation: dlRipple .6s ease-out forwards;
@@ -180,15 +180,43 @@ textarea { resize: vertical; }
   100% { transform: scale(1.5); opacity: 0; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .card-dl, .modal-dl, .card-dl::before, .modal-dl::before, .card-dl-icon { transition: none !important; animation: none !important; }
+  .card-dl, .card-dl::before, .card-dl-icon,
+  .modal-dl, .modal-dl::before, .modal-dl-icon { transition: none !important; animation: none !important; }
 }
 
-/* botão de download dentro do modal */
+/* ===== BOTÃO DE DOWNLOAD NO MODAL (mesmas animações, tamanho original) ===== */
 .modal-dl {
-  margin-top: 0; padding: 12px 22px; font-size: .98rem;
-  display: inline-flex; align-self: flex-start;
+  position: relative; overflow: hidden;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 13px 20px; border-radius: 999px;
+  background: linear-gradient(115deg, var(--primary), color-mix(in srgb, var(--accent) 65%, var(--primary)));
+  color: var(--primary-ink); font: inherit; font-weight: 800; font-size: 1rem;
+  text-decoration: none; letter-spacing: .01em;
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--primary) 28%, transparent);
+  transition: transform .22s cubic-bezier(.2,.9,.3,1.4), box-shadow .22s, filter .22s;
+  will-change: transform; width: 100%;
 }
-.modal-dl:hover { transform: scale(1.06); }
+.modal-dl::before {
+  content: ""; position: absolute; inset: 0;
+  background: linear-gradient(110deg, transparent 20%, rgba(255,255,255,.55) 50%, transparent 80%);
+  transform: translateX(-120%);
+  transition: transform .7s ease;
+}
+.modal-dl:hover {
+  transform: scale(1.07);
+  filter: brightness(1.06);
+  box-shadow: 0 14px 28px color-mix(in srgb, var(--primary) 42%, transparent);
+}
+.modal-dl:hover::before { transform: translateX(120%); }
+.modal-dl:hover .modal-dl-icon { animation: dlBounce .7s ease infinite; }
+.modal-dl:active { transform: scale(.94); }
+.modal-dl.is-clicked { animation: dlPop .6s cubic-bezier(.2,.9,.3,1.4); }
+.modal-dl.is-clicked::after {
+  content: ""; position: absolute; inset: 0; border-radius: inherit;
+  border: 2px solid color-mix(in srgb, var(--primary) 70%, transparent);
+  animation: dlRipple .6s ease-out forwards;
+}
+.modal-dl-icon { display: inline-block; font-size: 1.05rem; }
 
 .empty { text-align: center; padding: 70px 20px; color: var(--muted); }
 .empty-emoji { font-size: 3rem; }
