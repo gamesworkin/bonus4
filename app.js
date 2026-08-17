@@ -415,6 +415,18 @@ function renderGames() {
     });
   });
 
+  const modalDl = $("#gmDownload");
+  if (modalDl && !modalDl.dataset.animBound) {
+    modalDl.dataset.animBound = "1";
+    modalDl.addEventListener("click", (e) => {
+      e.stopPropagation();
+      modalDl.classList.remove("is-clicked");
+      void modalDl.offsetWidth;
+      modalDl.classList.add("is-clicked");
+      setTimeout(() => modalDl.classList.remove("is-clicked"), 650);
+    });
+  }
+
   $("#emptyState").classList.toggle("hidden", list.length > 0);
   $("#resultInfo").textContent = list.length
     ? `${list.length} jogo(s) encontrado(s) · página ${state.pubPage} de ${pages}`
@@ -440,16 +452,6 @@ $("#clearFilters").addEventListener("click", () => {
   $$("#menuBarInner .menu-link").forEach((x) => x.classList.remove("active"));
   state.pubPage = 1;
   renderGames();
-});
-
-/* ===== animação de clique no botão de download do modal ===== */
-$("#gmDownload").addEventListener("click", (e) => {
-  const a = e.currentTarget;
-  if (a.classList.contains("hidden")) return;
-  a.classList.remove("is-clicked");
-  void a.offsetWidth;
-  a.classList.add("is-clicked");
-  setTimeout(() => a.classList.remove("is-clicked"), 650);
 });
 
 /* ================= MODAL DO JOGO ================= */
