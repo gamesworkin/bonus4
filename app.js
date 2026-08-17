@@ -377,22 +377,43 @@ function renderGames() {
 
   $("#gamesGrid").innerHTML = slice
     .map((g) => `
-    <button class="card" data-id="${esc(g.id)}">
+    <div class="card" role="button" tabindex="0" data-id="${esc(g.id)}">
       <div class="card-cover">
         ${g.cover ? `<img src="${esc(g.cover)}" alt="${esc(g.title)}" loading="lazy" />` : ""}
         ${g.category ? `<span class="card-badge">${esc(g.category)}</span>` : ""}
         ${g.rating ? `<span class="card-rating">${esc(g.rating)}</span>` : ""}
       </div>
       <div class="card-info">
-        <p class="card-title">${esc(g.title)}</p>
+        <p class="card-title" title="${esc(g.title)}">${esc(g.title)}</p>
         <span class="card-sub">${[g.year, g.platform, sizeLabel(g)].filter(Boolean).map(esc).join(" · ") || "Detalhes"}</span>
+        ${g.download ? `<a class="card-dl" href="${esc(g.download)}" target="_blank" rel="noopener" aria-label="Baixar ${esc(g.title)}"><span class="card-dl-icon">⬇</span><span class="card-dl-text">Baixar</span></a>` : ""}
       </div>
-    </button>`)
+    </div>`)
     .join("");
 
-  $$("#gamesGrid .card").forEach((c) =>
-    c.addEventListener("click", () => openGame(c.dataset.id))
-  );
+  $$("#gamesGrid .card").forEach((c) => {
+    c.addEventListener("click", (e) => {
+      if (e.target.closest(".card-dl")) return;
+      openGame(c.dataset.id);
+    });
+    c.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        if (e.target.closest(".card-dl")) return;
+        e.preventDefault();
+        openGame(c.dataset.id);
+      }
+    });
+  });
+
+  $$("#gamesGrid .card-dl").forEach((a) => {
+    a.addEventListener("click", (e) => {
+      e.stopPropagation();
+      a.classList.remove("is-clicked");
+      void a.offsetWidth;
+      a.classList.add("is-clicked");
+      setTimeout(() => a.classList.remove("is-clicked"), 650);
+    });
+  });
 
   $("#emptyState").classList.toggle("hidden", list.length > 0);
   $("#resultInfo").textContent = list.length
