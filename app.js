@@ -66,7 +66,11 @@ function toast(msg) {
 }
 
 function openModal(id) { $(id).hidden = false; document.body.style.overflow = "hidden"; }
-function closeModal(el) { el.hidden = true; document.body.style.overflow = ""; }
+function closeModal(el) {
+  el.hidden = true;
+  const anyOpen = $$(".modal-backdrop").some((m) => !m.hidden);
+  document.body.style.overflow = anyOpen ? "hidden" : "";
+}
 
 $$(".modal-backdrop").forEach((bd) => {
   bd.addEventListener("click", (e) => { if (e.target === bd) closeModal(bd); });
@@ -412,6 +416,7 @@ $("#clearFilters").addEventListener("click", () => {
   $("#sortFilter").value = "az";
   $("#searchInput").value = "";
   state.activeMenuCategory = "";
+  $$("#menuBarInner .menu-link").forEach((x) => x.classList.remove("active"));
   state.pubPage = 1;
   renderGames();
 });
@@ -488,8 +493,12 @@ function renderMenuAdmin() {
 
   const save = async (arr) => {
     if (!state.isAdmin) return toast("Somente admin.");
-    await db.ref("settings/menus").set(arr);
-    toast("Menus atualizados.");
+    try {
+      await db.ref("settings/menus").set(arr);
+      toast("Menus atualizados.");
+    } catch (ex) {
+      toast("Erro ao salvar menus: " + writeError(ex));
+    }
   };
   $$("#menuList [data-mup]").forEach((b) => b.addEventListener("click", () => {
     const i = +b.dataset.mup; if (i === 0) return;
@@ -527,9 +536,13 @@ $("#menuForm").addEventListener("submit", async (e) => {
   const arr = [...(state.menus || [])];
   if (state.menuEditIndex != null) arr[state.menuEditIndex] = item;
   else arr.push(item);
-  await db.ref("settings/menus").set(arr);
-  toast(state.menuEditIndex != null ? "Menu atualizado!" : "Menu adicionado!");
-  resetMenuForm();
+  try {
+    await db.ref("settings/menus").set(arr);
+    toast(state.menuEditIndex != null ? "Menu atualizado!" : "Menu adicionado!");
+    resetMenuForm();
+  } catch (ex) {
+    toast("Erro ao salvar menu: " + writeError(ex));
+  }
 });
 function resetMenuForm() {
   state.menuEditIndex = null;
@@ -680,6 +693,15 @@ $("#stepNext").addEventListener("click", () => {
 });
 $$("#formSteps .step").forEach((s) => s.addEventListener("click", () => showStep(+s.dataset.step)));
 
+function writeError(ex) {
+  const m = String((ex && ex.message) || ex || "");
+  if (/permission[_ ]denied/i.test(m)) {
+    return "Permissão negada pelo Firebase. Entre como " + ADMIN_EMAIL +
+      " e confira as regras do Realtime Database (games/settings com .write para esse e-mail).";
+  }
+  return m || "Erro desconhecido.";
+}
+
 function formError(msg) {
   const el = $("#formError");
   el.textContent = msg;
@@ -771,7 +793,7 @@ $("#gameForm").addEventListener("submit", async (e) => {
     toast(id ? "Jogo atualizado!" : "Jogo cadastrado!");
     resetForm();
   } catch (ex) {
-    formError("Erro ao salvar: " + ex.message);
+    formError("Erro ao salvar: " + writeError(ex));
   }
 });
 
@@ -812,8 +834,12 @@ function renderAdminList() {
   $$("#adminList [data-del]").forEach((b) =>
     b.addEventListener("click", async () => {
       if (!confirm("Excluir este jogo definitivamente?")) return;
-      await db.ref("games/" + b.dataset.del).remove();
-      toast("Jogo excluído.");
+      try {
+        await db.ref("games/" + b.dataset.del).remove();
+        toast("Jogo excluído.");
+      } catch (ex) {
+        toast("Erro ao excluir: " + writeError(ex));
+      }
     })
   );
 
@@ -826,16 +852,20 @@ function renderAdminList() {
 $("#brandForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   if (!state.isAdmin) return toast("Somente admin.");
-  await db.ref("settings").update({
-    logoSquare: imgFields.logoSquare.getValue(),
-    logoWord: imgFields.logoWord.getValue(),
-    favicon: imgFields.favicon.getValue(),
-    siteName: $("#bSiteName").value.trim(),
-    heroTitle: $("#bHeroTitle").value.trim(),
-    heroSubtitle: $("#bHeroSubtitle").value.trim(),
-    footerText: $("#bFooter").value.trim(),
-  });
-  toast("Identidade salva!");
+  try {
+    await db.ref("settings").update({
+      logoSquare: imgFields.logoSquare.getValue(),
+      logoWord: imgFields.logoWord.getValue(),
+      favicon: imgFields.favicon.getValue(),
+      siteName: $("#bSiteName").value.trim(),
+      heroTitle: $("#bHeroTitle").value.trim(),
+      heroSubtitle: $("#bHeroSubtitle").value.trim(),
+      footerText: $("#bFooter").value.trim(),
+    });
+    toast("Identidade salva!");
+  } catch (ex) {
+    toast("Erro ao salvar identidade: " + writeError(ex));
+  }
 });
 
 function collectTheme() {
@@ -868,20 +898,32 @@ $("#themeForm").addEventListener("input", () => {
 $("#themeForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   if (!state.isAdmin) return toast("Somente admin.");
-  await db.ref("settings/theme").set(collectTheme());
-  toast("Personalização salva!");
+  try {
+    await db.ref("settings/theme").set(collectTheme());
+    toast("Personalização salva!");
+  } catch (ex) {
+    toast("Erro ao salvar personalização: " + writeError(ex));
+  }
 });
 $("#themeReset").addEventListener("click", async () => {
   if (!state.isAdmin) return toast("Somente admin.");
-  await db.ref("settings/theme").set(DEFAULT_THEME);
-  toast("Tema restaurado.");
+  try {
+    await db.ref("settings/theme").set(DEFAULT_THEME);
+    toast("Tema restaurado.");
+  } catch (ex) {
+    toast("Erro ao restaurar tema: " + writeError(ex));
+  }
 });
 
 $("#helpForm").addEventListener("submit", async (e) => {
   e.preventDefault();
   if (!state.isAdmin) return toast("Somente admin.");
-  await db.ref("settings").update({ help: $("#hContent").value });
-  toast("Ajuda salva!");
+  try {
+    await db.ref("settings").update({ help: $("#hContent").value });
+    toast("Ajuda salva!");
+  } catch (ex) {
+    toast("Erro ao salvar ajuda: " + writeError(ex));
+  }
 });
 
 /* ================= BACKUP ================= */
