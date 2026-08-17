@@ -31,6 +31,54 @@ const PUBLIC_PER_PAGE = 15;   // 15 jogos por página (desktop e mobile)
 const PAGE_WINDOW = 5;        // mostra no máximo 5 números de página
 const MAX_IMAGE_KB = 220;     // limite do base64 salvo no Realtime Database
 
+
+/* ================= PROTEÇÃO (anti cópia / código-fonte) ================= */
+document.addEventListener("contextmenu", (e) => e.preventDefault());
+document.addEventListener("dragstart", (e) => { if (e.target.tagName === "IMG" || e.target.tagName === "A") e.preventDefault(); });
+document.addEventListener("keydown", (e) => {
+  const k = (e.key || "").toLowerCase();
+  const blockedCtrl = ["u", "s", "p"];
+  const blockedCtrlShift = ["i", "j", "c", "k", "e"];
+  if (k === "f12"
+    || ((e.ctrlKey || e.metaKey) && e.shiftKey && blockedCtrlShift.includes(k))
+    || ((e.ctrlKey || e.metaKey) && blockedCtrl.includes(k))) {
+    e.preventDefault();
+    e.stopPropagation();
+    return false;
+  }
+});
+
+/* ================= LINKS OCULTOS ================= */
+const _linkVault = new Map();
+let _linkSeq = 0;
+function cloak(url) {
+  if (!url) return "";
+  const key = "lk" + (++_linkSeq).toString(36) + Math.random().toString(36).slice(2, 8);
+  _linkVault.set(key, String(url));
+  return key;
+}
+function revealLink(key) { return _linkVault.get(key) || ""; }
+function openCloaked(key, sameTab) {
+  const url = revealLink(key);
+  if (!url) return;
+  if (sameTab) { location.href = url; return; }
+  const w = window.open("about:blank", "_blank", "noopener,noreferrer");
+  if (w) { w.opener = null; w.location.replace(url); } else { location.href = url; }
+}
+/* Carrega imagens sem expor a URL no DOM (usa blob local) */
+async function loadHiddenImage(img, url) {
+  if (!img) return;
+  if (!url) { img.removeAttribute("src"); return; }
+  try {
+    const res = await fetch(url, { mode: "cors" });
+    if (!res.ok) throw new Error("fail");
+    const blob = await res.blob();
+    img.src = URL.createObjectURL(blob);
+  } catch {
+    img.src = url;
+  }
+}
+
 /* ================= ESTADO ================= */
 const state = {
   games: [],
@@ -379,14 +427,14 @@ function renderGames() {
     .map((g) => `
     <div class="card" role="button" tabindex="0" data-id="${esc(g.id)}">
       <div class="card-cover">
-        ${g.cover ? `<img src="${esc(g.cover)}" alt="${esc(g.title)}" loading="lazy" />` : ""}
+        ${g.cover ? `<img data-cover="${esc(cloak(g.cover))}" alt="${esc(g.title)}" loading="lazy" />` : ""}
         ${g.category ? `<span class="card-badge">${esc(g.category)}</span>` : ""}
         ${g.rating ? `<span class="card-rating">${esc(g.rating)}</span>` : ""}
       </div>
       <div class="card-info">
         <p class="card-title" title="${esc(g.title)}">${esc(g.title)}</p>
         <span class="card-sub">${[g.year, g.platform, sizeLabel(g)].filter(Boolean).map(esc).join(" · ") || "Detalhes"}</span>
-        ${g.download ? `<a class="card-dl" href="${esc(g.download)}" target="_blank" rel="noopener" aria-label="Baixar ${esc(g.title)}"><span class="card-dl-icon">⬇</span><span class="card-dl-text">Baixar</span></a>` : ""}
+        ${g.download ? `<button type="button" class="card-dl" data-dl="${esc(cloak(g.download))}" aria-label="Baixar ${esc(g.title)}"><span class="card-dl-icon">⬇</span><span class="card-dl-text">Baixar</span></button>` : ""}
       </div>
     </div>`)
     .join("");
@@ -405,9 +453,12 @@ function renderGames() {
     });
   });
 
+  $$("#gamesGrid [data-cover]").forEach((img) => loadHiddenImage(img, revealLink(img.dataset.cover)));
+
   $$("#gamesGrid .card-dl").forEach((a) => {
     a.addEventListener("click", (e) => {
       e.stopPropagation();
+      openCloaked(a.dataset.dl);
       a.classList.remove("is-clicked");
       void a.offsetWidth;
       a.classList.add("is-clicked");
@@ -420,6 +471,7 @@ function renderGames() {
     modalDl.dataset.animBound = "1";
     modalDl.addEventListener("click", (e) => {
       e.stopPropagation();
+      openCloaked(modalDl.dataset.dl);
       modalDl.classList.remove("is-clicked");
       void modalDl.offsetWidth;
       modalDl.classList.add("is-clicked");
@@ -459,7 +511,7 @@ function openGame(id) {
   const g = state.games.find((x) => x.id === id);
   if (!g) return;
   const cover = $("#gmCover");
-  if (g.cover) { cover.src = g.cover; cover.alt = g.title || ""; cover.parentElement.hidden = false; }
+  if (g.cover) { loadHiddenImage(cover, g.cover); cover.alt = g.title || ""; cover.parentElement.hidden = false; }
   else cover.parentElement.hidden = true;
 
   $("#gmTitle").textContent = g.title || "Sem título";
@@ -476,7 +528,7 @@ function openGame(id) {
   $("#gmSpecs").innerHTML = specs.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("");
 
   const dl = $("#gmDownload");
-  if (g.download) { dl.href = g.download; dl.classList.remove("hidden"); }
+  if (g.download) { dl.dataset.dl = cloak(g.download); dl.classList.remove("hidden"); }
   else dl.classList.add("hidden");
 
   openModal("#gameModal");
@@ -487,7 +539,7 @@ function renderMenuBar() {
   const menus = state.menus || [];
   $("#menuBar").classList.toggle("hidden", menus.length === 0);
   $("#menuBarInner").innerHTML = menus
-    .map((m, i) => `<a class="menu-link" href="${esc(m.url || "#")}" data-menu="${i}"${m.blank ? ' target="_blank" rel="noopener"' : ""}>${esc(m.label)}</a>`)
+    .map((m, i) => `<button type="button" class="menu-link" data-menu="${i}" data-href="${esc(cloak(m.url || ""))}">${esc(m.label)}</button>`)
     .join("");
 
   $$("#menuBarInner .menu-link").forEach((a) =>
@@ -503,7 +555,16 @@ function renderMenuBar() {
         state.pubPage = 1;
         renderGames();
         $("#gamesGrid").scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
       }
+      const url = revealLink(a.dataset.href);
+      if (!url) return;
+      if (url.startsWith("#")) {
+        const el = document.querySelector(url);
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+      openCloaked(a.dataset.href, !m.blank);
     })
   );
 }
@@ -591,12 +652,18 @@ function renderSettings() {
   applyTheme();
 
   const sq = $("#logoSquare"), wd = $("#logoWord"), fb = $("#brandFallback");
-  if (s.logoSquare) { sq.src = s.logoSquare; sq.hidden = false; } else sq.hidden = true;
-  if (s.logoWord) { wd.src = s.logoWord; wd.hidden = false; } else wd.hidden = true;
+  if (s.logoSquare) { loadHiddenImage(sq, s.logoSquare); sq.hidden = false; } else sq.hidden = true;
+  if (s.logoWord) { loadHiddenImage(wd, s.logoWord); wd.hidden = false; } else wd.hidden = true;
   fb.textContent = s.siteName || "GameVault";
   fb.hidden = !!s.logoWord;
 
-  if (s.favicon) $("#faviconTag").href = s.favicon;
+  if (s.favicon) {
+    if (s.favicon.startsWith("data:")) $("#faviconTag").href = s.favicon;
+    else fetch(s.favicon, { mode: "cors" })
+      .then((r) => r.blob())
+      .then((b) => { $("#faviconTag").href = URL.createObjectURL(b); })
+      .catch(() => { $("#faviconTag").href = s.favicon; });
+  }
 
   $("#heroTitle").textContent = s.heroTitle || "Sua biblioteca de jogos";
   $("#heroSubtitle").textContent = s.heroSubtitle || "Clique em um jogo para ver detalhes e baixar.";
