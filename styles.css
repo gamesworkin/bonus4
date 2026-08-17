@@ -371,18 +371,27 @@ img { -webkit-user-drag: none; user-select: none; -webkit-touch-callout: none; p
 
 
 /* ============ BARRA DE MENUS ============ */
-.menubar { border-top: 1px solid var(--border); background: color-mix(in srgb, var(--surface) 70%, transparent); }
+.menubar { border-top: 1px solid rgba(255,255,255,.06); background: #0a0c12; }
 .menubar.hidden { display: none; }
 .menubar-inner {
   max-width: var(--max); margin: 0 auto; padding: 6px 18px;
-  display: flex; align-items: center; gap: 6px; overflow-x: auto; scrollbar-width: thin;
+  display: flex; align-items: center; gap: 6px; overflow-x: auto;
+  scrollbar-width: none; -ms-overflow-style: none;
 }
+.menubar-inner::-webkit-scrollbar { width: 0; height: 0; display: none; }
 .menu-link {
-  white-space: nowrap; text-decoration: none; color: var(--muted);
+  white-space: nowrap; text-decoration: none; color: #ffffff;
   font-weight: 700; font-size: .88rem; padding: 8px 12px; border-radius: 9px;
-  border: 1px solid transparent; transition: color .15s, background .15s;
+  border: 1px solid transparent; background: transparent;
+  transition: color .2s ease, background .2s ease, border-color .2s ease, transform .2s ease, box-shadow .2s ease;
 }
-.menu-link:hover, .menu-link.active { color: var(--text); background: var(--surface-2); border-color: var(--border); }
+.menu-link:hover, .menu-link:focus-visible {
+  color: #ffffff; background: rgba(255,255,255,.12);
+  border-color: rgba(255,255,255,.18);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0,0,0,.35);
+}
+.menu-link.active { color: #ffffff; background: rgba(255,255,255,.16); border-color: rgba(255,255,255,.22); }
 
 /* ============ FILTROS ============ */
 .filters { border-bottom: 1px solid var(--border); background: var(--bg-2); }

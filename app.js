@@ -62,8 +62,15 @@ function openCloaked(key, sameTab) {
   const url = revealLink(key);
   if (!url) return;
   if (sameTab) { location.href = url; return; }
-  const w = window.open("about:blank", "_blank", "noopener,noreferrer");
-  if (w) { w.opener = null; w.location.replace(url); } else { location.href = url; }
+  let w = null;
+  try { w = window.open(url, "_blank"); } catch { w = null; }
+  if (w) { try { w.opener = null; } catch {} return; }
+  const a = document.createElement("a");
+  a.href = url; a.target = "_blank"; a.rel = "noopener noreferrer";
+  a.style.display = "none";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => a.remove(), 0);
 }
 /* Carrega imagens sem expor a URL no DOM (usa blob local) */
 async function loadHiddenImage(img, url) {
