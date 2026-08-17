@@ -467,6 +467,16 @@ function openGame(id) {
   if (g.download) { dl.href = g.download; dl.classList.remove("hidden"); }
   else dl.classList.add("hidden");
 
+  if (!dl.dataset.animBound) {
+    dl.dataset.animBound = "1";
+    dl.addEventListener("click", () => {
+      dl.classList.remove("is-clicked");
+      void dl.offsetWidth;
+      dl.classList.add("is-clicked");
+      setTimeout(() => dl.classList.remove("is-clicked"), 650);
+    });
+  }
+
   openModal("#gameModal");
 }
 
